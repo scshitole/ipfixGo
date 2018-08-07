@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -12,9 +13,9 @@ import (
 
 func main() {
 	// Create a single reader which can be called multiple times
-
-	/* scanner := bufio.NewScanner(os.Stdin)
-	var Bigipmgmt, User, Pass string
+	var UserResponse, Vresponse, Eresponse, FirstSensor, SecondSensor, ThirdSensor string
+	scanner := bufio.NewScanner(os.Stdin)
+	/* var Bigipmgmt, User, Pass string
 	fmt.Print("Enter your bigipmgmt: ")
 	scanner.Scan()
 	Bigipmgmt = scanner.Text()
@@ -98,40 +99,174 @@ func main() {
 		scanner.Scan()
 		UserResponse = scanner.Text()
 		if UserResponse == "Y" {
-			fmt.Println("Do you wish to configure iRule on all Virtual Server Y/N ?")
+			fmt.Println("Appy iRule on all Virtual Server Y/N ?")
 			scanner.Scan()
 			Vresponse = scanner.Text()
 			if Vresponse == "Y" {
 				fmt.Println("Configuring iRule on all Virtual Server ......")
-				applyIruleOnAll()
+				applyIruleOnAll(Bigipmgmt, User, Pass)
 			} else {
-				fmt.Println("You tell me which Virtual Server needs iRule ? ")
+				fmt.Println("Please select Virtual Server needs iRule ? ")
+				applyOneByOne(Bigipmgmt, User, Pass)
 			}
+		} else {
+			fmt.Println("Update New Sensors  Y/N?")
+			scanner.Scan()
+			Eresponse = scanner.Text()
+			if Eresponse == "Y" {
+				updateIpfixPool(Bigipmgmt, User, Pass)
+			} else {
+				fmt.Println("exit from here  ")
+			}
+
+			addNewSensor(Bigipmgmt, User, Pass)
 		}
 
 	}
+	fmt.Println("IPFIX Pool Does not Exists on BIGIP Creating .....")
+	fmt.Println("Enter first IPFIX Sensor")
+	scanner.Scan()
+	FirstSensor = scanner.Text()
+	fmt.Println("Enter Second IPFIX Sensor")
+	scanner.Scan()
+	SecondSensor = scanner.Text()
+	fmt.Println("Enter Third IPFIX Sensor")
+	scanner.Scan()
+	ThirdSensor = scanner.Text()
+	createNewIPfixPool(Bigipmgmt, User, Pass)
+	addPoolMemebers(Bigipmgmt, User, Pass, FirstSensor)
+	addPoolMemebers(Bigipmgmt, User, Pass, SecondSensor)
+	addPoolMemebers(Bigipmgmt, User, Pass, ThirdSensor)
 
-	// Iterate over all the virtual servers, and display their names.
-	/*vservers, err := f5.VirtualServers()
+}
+
+func checkIpfixPoolExistsOnBigip(Bigipmgmt, User, Pass string) bool {
+	fmt.Println(" Checking IPFIX Pool exists on bigip ......")
+	// Iterate over all the Pools, and display their names.
+	f5 := bigip.NewSession(Bigipmgmt, User, Pass, nil)
+
+	pools, err := f5.Pools()
+	if err != nil {
+		panic(err.Error())
+	}
+
+	for _, pool := range pools.Pools {
+		fmt.Printf("Name: %s\n", pool.Name)
+		//vs.Description = "Modified Sanjay Shitole"
+		if pool.Name == "TetrationIPFIXPool" {
+			return true
+		}
+
+	}
+	return false
+}
+
+func applyIruleOnAll(Bigipmgmt, User, Pass string) {
+	// Go through all the virtual servers and display them
+
+	f5 := bigip.NewSession(Bigipmgmt, User, Pass, nil)
+	vservers, err := f5.VirtualServers()
 	if err != nil {
 		panic(err.Error())
 	}
 
 	for _, vs := range vservers.VirtualServers {
-		fmt.Printf("Name: %s\n, %s\n", vs.Name, vs.Pool)
-		//vs.Description = "Modified Sanjay Shitole"
-		f5.ModifyVirtualServer(vs.Name, &vs)
+		fmt.Printf(" Name: %s Virtual Server type is %s %s\n ", vs.Name, vs.IPProtocol, vs.Rules)
+		var a = vs.Rules
+		if len(a) != 0 {
+			fmt.Printf("value of .......", a)
+			for i, v := range a {
+				fmt.Printf("############################### %d %d\n", i, v)
+
+				if vs.IPProtocol == "tcp" {
+					vs.Rules = append(a, "/Common/Tetration_TCP_L4_ipfix") // Collect all iRules to be configured
+					fmt.Println("Value of vs.Rules .................. ", vs.Rules)
+					err := f5.ModifyVirtualServer(vs.Name, &vs)
+					if err != nil {
+						return
+					}
+
+				}
+			}
+
+		} else {
+			fmt.Printf(" I am in length and IP Protocol is %s", vs.IPProtocol)
+			if vs.IPProtocol == "tcp" {
+				vs.Rules = []string{"/Common/Tetration_TCP_L4_ipfix"}
+				f5.ModifyVirtualServer(vs.Name, &vs)
+
+			} else {
+				fmt.Println(" vs.IPProtocol is not tcp")
+			}
+		}
 
 	}
 
-	vaddrs, err := f5.VirtualAddresses()
-	if err != nil {
-		panic(err.Error())
-	}
-	for _, va := range vaddrs.VirtualAddresses {
-		fmt.Printf("VA: %+v\n", va)
-	}*/
 }
+
+func applyOneByOne(Bigipmgmt, User, Pass string) {
+	//return nil
+}
+
+func addNewSensor(Bigipmgmt, User, Pass string) {
+	//return nil
+}
+
+func updateIpfixPool(Bigipmgmt, User, Pass string) {
+	//return nil
+}
+
+func createNewIPfixPool(Bigipmgmt, User, Pass string) error {
+	f5 := bigip.NewSession(Bigipmgmt, User, Pass, nil)
+	name := "/Common/TetrationIPFIXPool"
+	err := f5.CreatePool(name)
+
+	fmt.Println(err)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func addPoolMemebers(Bigipmgmt, User, Pass, Sensor string) error {
+	f5 := bigip.NewSession(Bigipmgmt, User, Pass, nil)
+	member := Sensor + ":4739"
+	err := f5.AddPoolMember("TetrationIPFIXPool", member)
+	if err != nil {
+		return err
+	}
+
+	fmt.Println("value if pool member ", err)
+
+	/*poolmember.Name = FirstSensor + "4739"
+	err = f5.CreatePoolMember(pool, poolmember)
+	fmt.Println(err)
+	if err != nil {
+		return err
+	}*/
+	return nil
+}
+
+// Iterate over all the virtual servers, and display their names.
+/*vservers, err := f5.VirtualServers()
+if err != nil {
+	panic(err.Error())
+}
+
+for _, vs := range vservers.VirtualServers {
+	fmt.Printf("Name: %s\n, %s\n", vs.Name, vs.Pool)
+	//vs.Description = "Modified Sanjay Shitole"
+	f5.ModifyVirtualServer(vs.Name, &vs)
+
+}
+
+vaddrs, err := f5.VirtualAddresses()
+if err != nil {
+	panic(err.Error())
+}
+for _, va := range vaddrs.VirtualAddresses {
+	fmt.Printf("VA: %+v\n", va)
+}*/
 
 func fileTCPexists() bool {
 	if _, err := os.Stat("irules/Tetration_TCP_L4_ipfix.tcl"); err != nil {
@@ -180,7 +315,7 @@ func checkUDPiruleExistsOnBigip(Bigipmgmt, User, Pass string) bool {
 	}
 
 	for _, irule := range irules.IRules {
-		fmt.Printf("Name:in UDP loop %s\n", irule.Name)
+		fmt.Printf("Name:  %s\n", irule.Name)
 		//vs.Description = "Modified Sanjay Shitole"
 
 		if irule.Name == "Tetration_UDP_L4_ipfix" {

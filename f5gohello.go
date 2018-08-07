@@ -40,10 +40,10 @@ func main() {
 
 	fileUDPexists := fileUDPexists() // returns true or false
 	if fileUDPexists {
-		fmt.Println(" UDP iRule exists on your local machine")
+		fmt.Println("UDP iRule exists on your local machine")
 
 	} else {
-		fmt.Println(" UDP irule does not exists on local machine ..... getting from github")
+		fmt.Println("UDP irule does not exists on local machine ..... getting from github")
 		downloadUDPiruleFromGithub()
 	}
 
@@ -55,7 +55,7 @@ func main() {
 	//f5 := bigip.NewSession(Bigipmgmt, User, Pass, nil)
 	checkTCPonBigip := checkTCPiruleExistsOnBigip(Bigipmgmt, User, Pass)
 	if checkTCPonBigip {
-		fmt.Println(" TCP irule Exists on BIG-IP")
+		fmt.Println("TCP irule Exists on BIG-IP")
 	} else {
 		//fmt.Println(" TCP Irule Does not Exists on BIG-IP")
 		b, err := ioutil.ReadFile("irules/Tetration_TCP_L4_ipfix.tcl") // just pass the file name
@@ -67,14 +67,14 @@ func main() {
 
 		Rule := string(b) // convert content to a 'string'
 
-		fmt.Println(" Uploading TCP Irule to BIG-IP .........") // print the content as a 'string'
+		fmt.Println("Uploading TCP Irule to BIG-IP .........") // print the content as a 'string'
 		addTCPiruleToBigip(Bigipmgmt, User, Pass, Rule)
 
 	}
 	checkUDPonBigip := checkUDPiruleExistsOnBigip(Bigipmgmt, User, Pass)
 
 	if checkUDPonBigip {
-		fmt.Println(" UDP irule Exists on BIG-IP")
+		fmt.Println("UDP irule Exists on BIG-IP")
 	} else {
 		//fmt.Println(" UDP Irule Does not Exists on BIG-IP")
 		b, err := ioutil.ReadFile("irules/Tetration_UDP_L4_ipfix.tcl") // just pass the file name
@@ -86,7 +86,7 @@ func main() {
 
 		Rule := string(b) // convert content to a 'string'
 
-		fmt.Println(" Uploading UDP Irule to BIG-IP .........") // print the content as a 'string'
+		fmt.Println("Uploading UDP Irule to BIG-IP .........") // print the content as a 'string'
 		addUDPiruleToBigip(Bigipmgmt, User, Pass, Rule)
 
 	}
@@ -171,22 +171,17 @@ func applyIruleOnAll(Bigipmgmt, User, Pass string) {
 	}
 
 	for _, vs := range vservers.VirtualServers {
-		fmt.Printf(" Name: %s Virtual Server type is %s %s\n ", vs.Name, vs.IPProtocol, vs.Rules)
+		fmt.Printf("%s Virtual Server type is %s and IRules on this VIP are %s\n ", vs.Name, vs.IPProtocol, vs.Rules)
 		var a = vs.Rules
 		if len(a) != 0 {
-			fmt.Printf("value of .......", a)
-			for i, v := range a {
-				fmt.Printf("############################### %d %d\n", i, v)
-
-				if vs.IPProtocol == "tcp" {
-					vs.Rules = append(a, "/Common/Tetration_TCP_L4_ipfix") // Collect all iRules to be configured
-					fmt.Println("Value of vs.Rules .................. ", vs.Rules)
-					err := f5.ModifyVirtualServer(vs.Name, &vs)
-					if err != nil {
-						return
-					}
-
+			if vs.IPProtocol == "tcp" {
+				vs.Rules = append(a, "/Common/Tetration_TCP_L4_ipfix") // Collect all iRules to be configured
+				fmt.Printf("IPFIX IRule will be applied to Virtual Server %s\n ", vs.Name)
+				err := f5.ModifyVirtualServer(vs.Name, &vs)
+				if err != nil {
+					return
 				}
+
 			}
 
 		} else {

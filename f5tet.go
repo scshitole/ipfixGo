@@ -142,6 +142,8 @@ func main() {
 		addPoolMemebers(Bigipmgmt, User, Pass, SecondSensor)
 		addPoolMemebers(Bigipmgmt, User, Pass, ThirdSensor)
 		fmt.Println("Created .... IPFIX Pool and added Members \n\n")
+		createIPFIXLog(Bigipmgmt, User, Pass)
+		createPublisher(Bigipmgmt, User, Pass)
 	}
 
 }
@@ -333,6 +335,34 @@ func addPoolMemebers(Bigipmgmt, User, Pass, Sensor string) error {
 	return nil
 }
 
+func createIPFIXLog(Bigipmgmt, User, Pass string) error {
+	f5 := bigip.NewSession(Bigipmgmt, User, Pass, nil)
+	fmt.Println("Creating IPFIX Log Destination ......")
+	err := f5.CreateLogIPFIX("TetrationIPFIXLog", "", "TetrationIPFIXPool", "ipfix", "", 5, 30, "udp")
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func createPublisher(Bigipmgmt, User, Pass string) error {
+	var p bigip.LogPublisher
+	p.Name = "ipfix-pub-1"
+	f5 := bigip.NewSession(Bigipmgmt, User, Pass, nil)
+	p.Dests = make([]bigip.Destinations, 0, 1)
+	var r bigip.Destinations
+	r.Name = "TetrationIPFIXLog"
+	r.Partition = "Common"
+	p.Dests = append(p.Dests, r)
+
+	fmt.Println("Creating Log Publisher  ......")
+
+	err := f5.CreateLogPublisher(&p)
+	if err != nil {
+		return err
+	}
+	return nil
+}
 func fileTCPexists() bool {
 	if _, err := os.Stat("irules/Tetration_TCP_L4_ipfix.tcl"); err != nil {
 		return false

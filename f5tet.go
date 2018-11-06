@@ -13,7 +13,7 @@ import (
 
 func main() {
 	// Create a single reader which can be called multiple times
-	var UserResponse, Vresponse, Eresponse, FirstSensor, SecondSensor, ThirdSensor string
+	var UserResponse, Vresponse, Eresponse, FirstSensor, SecondSensor, Uresponse, ThirdSensor string
 	scanner := bufio.NewScanner(os.Stdin)
 	/* var Bigipmgmt, User, Pass string
 	fmt.Print("Enter your bigipmgmt: ")
@@ -110,16 +110,20 @@ func main() {
 				applyOneByOne(Bigipmgmt, User, Pass)
 			}
 		} else {
-			fmt.Println("Update New Sensors  Y/N?")
+			fmt.Println("Update Sensors  Y/N?")
 			scanner.Scan()
 			Eresponse = scanner.Text()
 			if Eresponse == "Y" {
-				updateIpfixPool(Bigipmgmt, User, Pass)
+				updateIpfixPoolMember(Bigipmgmt, User, Pass)
 			} else {
-				fmt.Println("exit from here  ")
+				fmt.Println("Update New Sensors  Y/N?")
+				scanner.Scan()
+				Uresponse = scanner.Text()
+				if Uresponse == "Y" {
+					addNewSensor(Bigipmgmt, User, Pass)
+				}
 			}
 
-			addNewSensor(Bigipmgmt, User, Pass)
 		}
 
 	} else {
@@ -244,11 +248,67 @@ func applyOneByOne(Bigipmgmt, User, Pass string) {
 }
 
 func addNewSensor(Bigipmgmt, User, Pass string) {
-	//return nil
+	var Nresponse string
+	f5 := bigip.NewSession(Bigipmgmt, User, Pass, nil)
+	name := "/Common/TetrationIPFIXPool"
+	members, err := f5.PoolMembers(name)
+	if err != nil {
+		panic(err.Error())
+	}
+	for _, m := range members.PoolMembers {
+		fmt.Printf("You have following Sensors installed already  %s :\n", m.Name)
+	}
+	scanner := bufio.NewScanner(os.Stdin)
+	fmt.Println("Enter the New Sensor IP (Port not required) \n")
+	scanner.Scan()
+	Nresponse = scanner.Text()
+	addPoolMemebers(Bigipmgmt, User, Pass, Nresponse)
+	nodes, err := f5.PoolMembers(name)
+	if err != nil {
+		panic(err.Error())
+	}
+	for _, t := range nodes.PoolMembers {
+		fmt.Printf("Sensors installed are %s :\n", t.Name)
+	}
+
 }
 
-func updateIpfixPool(Bigipmgmt, User, Pass string) {
-	//return nil
+func updateIpfixPoolMember(Bigipmgmt, User, Pass string) {
+	var Sresponse, Dresponse string
+	scanner := bufio.NewScanner(os.Stdin)
+	f5 := bigip.NewSession(Bigipmgmt, User, Pass, nil)
+	name := "/Common/TetrationIPFIXPool"
+	members, err := f5.PoolMembers(name)
+	if err != nil {
+		panic(err.Error())
+	}
+	for _, m := range members.PoolMembers {
+		fmt.Printf("Sensors installed are %s :\n", m.Name)
+	}
+
+	for _, m := range members.PoolMembers {
+
+		fmt.Printf("Want to  change this Sensor IP %s : Y/N? \n", m.Name)
+		scanner.Scan()
+		Sresponse = scanner.Text()
+		if Sresponse == "Y" {
+			err := f5.DeletePoolMember(name, m.Name)
+			if err != nil {
+				panic(err.Error())
+			}
+			fmt.Println("Enter the New Sensor IP (Port not required) \n")
+			scanner.Scan()
+			Dresponse = scanner.Text()
+			addPoolMemebers(Bigipmgmt, User, Pass, Dresponse)
+		}
+	}
+	t, err := f5.PoolMembers(name)
+	if err != nil {
+		panic(err.Error())
+	}
+	for _, m := range t.PoolMembers {
+		fmt.Printf("Updated Sensors list : %s \n", m.Name)
+	}
 }
 
 func createNewIPfixPool(Bigipmgmt, User, Pass string) error {

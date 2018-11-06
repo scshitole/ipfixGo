@@ -21,15 +21,15 @@ func main() {
 	for _, vs := range vservers.VirtualServers {
 		fmt.Printf("Name: %s\n, %s\n", vs.Name, vs.Pool)
 		//vs.Description = "Modified Sanjay Shitole"
-	//	f5.ModifyVirtualServer(vs.Name, &vs)
-                fmt.Printf(" value of vs ................................................. ", vs)
+		//	f5.ModifyVirtualServer(vs.Name, &vs)
+		fmt.Printf(" value of vs ................................................. ", vs)
 	}
 
-/*	vaddrs, err := f5.VirtualAddresses()
-	if err != nil {
-		panic(err.Error())
-	}
-	for _, va := range vaddrs.VirtualAddresses {
-		fmt.Printf("VA: %+v\n", va)
-	}*/
+	/*	vaddrs, err := f5.VirtualAddresses()
+		if err != nil {
+			panic(err.Error())
+		}
+		for _, va := range vaddrs.VirtualAddresses {
+			fmt.Printf("VA: %+v\n", va)
+		}*/
 }

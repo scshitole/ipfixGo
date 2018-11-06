@@ -123,22 +123,22 @@ func main() {
 		}
 
 	} else {
-	fmt.Println("IPFIX Pool Does not Exists on BIGIP Creating .....")
-	fmt.Println("Enter first IPFIX Sensor")
-	scanner.Scan()
-	FirstSensor = scanner.Text()
-	fmt.Println("Enter Second IPFIX Sensor")
-	scanner.Scan()
-	SecondSensor = scanner.Text()
-	fmt.Println("Enter Third IPFIX Sensor")
-	scanner.Scan()
-	ThirdSensor = scanner.Text()
-	createNewIPfixPool(Bigipmgmt, User, Pass)
-	addPoolMemebers(Bigipmgmt, User, Pass, FirstSensor)
-	addPoolMemebers(Bigipmgmt, User, Pass, SecondSensor)
-	addPoolMemebers(Bigipmgmt, User, Pass, ThirdSensor)
-	fmt.Println("Created .... IPFIX Pool and added Members \n\n")
-}
+		fmt.Println("IPFIX Pool Does not Exists on BIGIP Creating .....")
+		fmt.Println("Enter first IPFIX Sensor")
+		scanner.Scan()
+		FirstSensor = scanner.Text()
+		fmt.Println("Enter Second IPFIX Sensor")
+		scanner.Scan()
+		SecondSensor = scanner.Text()
+		fmt.Println("Enter Third IPFIX Sensor")
+		scanner.Scan()
+		ThirdSensor = scanner.Text()
+		createNewIPfixPool(Bigipmgmt, User, Pass)
+		addPoolMemebers(Bigipmgmt, User, Pass, FirstSensor)
+		addPoolMemebers(Bigipmgmt, User, Pass, SecondSensor)
+		addPoolMemebers(Bigipmgmt, User, Pass, ThirdSensor)
+		fmt.Println("Created .... IPFIX Pool and added Members \n\n")
+	}
 
 }
 
@@ -176,33 +176,33 @@ func applyIruleOnAll(Bigipmgmt, User, Pass string) {
 		fmt.Printf("%s Virtual Server type is %s and IRules on this VIP are %s\n\n ", vs.Name, vs.IPProtocol, vs.Rules)
 		var a = vs.Rules
 		//if  len(a) != 0 {
-			if vs.IPProtocol == "tcp" {
-				vs.Rules = append(a, "/Common/Tetration_TCP_L4_ipfix") // Collect all iRules to be configured
-				fmt.Printf("IPFIX TCP IRule will be applied to Virtual Server %s\n\n ", vs.Name)
-				err := f5.ModifyVirtualServer(vs.Name, &vs)
-				if err != nil {
-					return
-			             	}
+		if vs.IPProtocol == "tcp" {
+			vs.Rules = append(a, "/Common/Tetration_TCP_L4_ipfix") // Collect all iRules to be configured
+			fmt.Printf("IPFIX TCP IRule will be applied to Virtual Server %s\n\n ", vs.Name)
+			err := f5.ModifyVirtualServer(vs.Name, &vs)
+			if err != nil {
+				return
+			}
 
-		       	} else {
+		} else {
 
 			if vs.IPProtocol == "udp" {
 				vs.Rules = append(a, "/Common/Tetration_UDP_L4_ipfix") // Collect all iRules to be configured
 				fmt.Printf("IPFIX UDP IRule will be applied to Virtual Server %s\n\n ", vs.Name)
 				//	vs.Rules = []string{"/Common/Tetration_UDP_L4_ipfix"}
 				f5.ModifyVirtualServer(vs.Name, &vs)
-		         	}  else {
-				            fmt.Printf("Virtual Servers is not UDP/TCP no irule applied to: %s \n", vs.Name)
-		                	}
-										}
-		  //   } // inner if  loop
+			} else {
+				fmt.Printf("Virtual Servers is not UDP/TCP no irule applied to: %s \n", vs.Name)
+			}
+		}
+		//   } // inner if  loop
 
-	     }  // outer for loop
+	} // outer for loop
 
 }
 
 func applyOneByOne(Bigipmgmt, User, Pass string) {
- var Uresponse string
+	var Uresponse string
 	scanner := bufio.NewScanner(os.Stdin)
 	// Go through all the virtual servers and display them
 	f5 := bigip.NewSession(Bigipmgmt, User, Pass, nil)
@@ -211,35 +211,34 @@ func applyOneByOne(Bigipmgmt, User, Pass string) {
 		panic(err.Error())
 	}
 	for _, vs := range vservers.VirtualServers {
-  var a = vs.Rules
-	fmt.Printf("%s Virtual Server type is %s and IRules on this VIP are %s\n\n ", vs.Name, vs.IPProtocol, vs.Rules)
-	fmt.Println("Do you want to Apply iRule to this Above Virtual Server  say Y/N ?")
-	scanner.Scan()
-	Uresponse = scanner.Text()
-	if Uresponse == "Y" {
-		if vs.IPProtocol == "tcp" {
-			vs.Rules = append(a, "/Common/Tetration_TCP_L4_ipfix") // Collect all iRules to be configured
-			fmt.Printf("IPFIX TCP IRule will be applied to Virtual Server %s\n\n ", vs.Name)
-			err := f5.ModifyVirtualServer(vs.Name, &vs)
-			if err != nil {
-				return
-									}
+		var a = vs.Rules
+		fmt.Printf("%s Virtual Server type is %s and IRules on this VIP are %s\n\n ", vs.Name, vs.IPProtocol, vs.Rules)
+		fmt.Println("Do you want to Apply iRule to this Above Virtual Server  say Y/N ?")
+		scanner.Scan()
+		Uresponse = scanner.Text()
+		if Uresponse == "Y" {
+			if vs.IPProtocol == "tcp" {
+				vs.Rules = append(a, "/Common/Tetration_TCP_L4_ipfix") // Collect all iRules to be configured
+				fmt.Printf("IPFIX TCP IRule will be applied to Virtual Server %s\n\n ", vs.Name)
+				err := f5.ModifyVirtualServer(vs.Name, &vs)
+				if err != nil {
+					return
+				}
 
-					}  else {
+			} else {
 
-		if vs.IPProtocol == "udp" {
-			vs.Rules = append(a, "/Common/Tetration_UDP_L4_ipfix") // Collect all iRules to be configured
-			fmt.Printf("IPFIX UDP IRule will be applied to Virtual Server %s\n\n ", vs.Name)
-			//	vs.Rules = []string{"/Common/Tetration_UDP_L4_ipfix"}
-			f5.ModifyVirtualServer(vs.Name, &vs)
-						}  else {
-									fmt.Printf("Virtual Servers is not UDP/TCP no irule applied to: %s \n", vs.Name)
-										}
-									}
+				if vs.IPProtocol == "udp" {
+					vs.Rules = append(a, "/Common/Tetration_UDP_L4_ipfix") // Collect all iRules to be configured
+					fmt.Printf("IPFIX UDP IRule will be applied to Virtual Server %s\n\n ", vs.Name)
+					//	vs.Rules = []string{"/Common/Tetration_UDP_L4_ipfix"}
+					f5.ModifyVirtualServer(vs.Name, &vs)
+				} else {
+					fmt.Printf("Virtual Servers is not UDP/TCP no irule applied to: %s \n", vs.Name)
+				}
+			}
 
+		}
 	}
-}
-
 
 	//return nil
 }

@@ -71,7 +71,8 @@ func main() {
 		addTCPiruleToBigip(Bigipmgmt, User, Pass, Rule)
 
 	}
-	checkUDPonBigip := checkUDPiruleExistsOnBigip(Bigipmgmt, User, Pass)
+
+	 checkUDPonBigip := checkUDPiruleExistsOnBigip(Bigipmgmt, User, Pass)
 
 	if checkUDPonBigip {
 		fmt.Println("UDP irule Exists on BIG-IP")
@@ -90,10 +91,31 @@ func main() {
 		addUDPiruleToBigip(Bigipmgmt, User, Pass, Rule)
 
 	}
+  checkIpfixOnBigip := checkIpfixPoolExistsOnBigip(Bigipmgmt, User, Pass)
+	if checkIpfixOnBigip == false {
+		fmt.Println("IPFIX Pool Does not Exists on BIGIP Creating .....")
+		fmt.Println("Enter first IPFIX Sensor")
+		scanner.Scan()
+		FirstSensor = scanner.Text()
+		fmt.Println("Enter Second IPFIX Sensor")
+		scanner.Scan()
+		SecondSensor = scanner.Text()
+		fmt.Println("Enter Third IPFIX Sensor")
+		scanner.Scan()
+		ThirdSensor = scanner.Text()
+		createNewIPfixPool(Bigipmgmt, User, Pass)
+		addPoolMemebers(Bigipmgmt, User, Pass, FirstSensor)
+		addPoolMemebers(Bigipmgmt, User, Pass, SecondSensor)
+		addPoolMemebers(Bigipmgmt, User, Pass, ThirdSensor)
+		fmt.Println("Created .... IPFIX Pool and added Members \n\n")
+		createIPFIXLog(Bigipmgmt, User, Pass)
+		createPublisher(Bigipmgmt, User, Pass)
+    checkIpfixOnBigip = true
 
-	checkIpfixOnBigip := checkIpfixPoolExistsOnBigip(Bigipmgmt, User, Pass)
+	}
 
-	if checkIpfixOnBigip {
+	if checkIpfixOnBigip == true {
+
 		fmt.Println("IPFIX Pool Exists on BIG-IP already")
 		fmt.Println("Do you want to use Existing IPFIX Pool say Y/N ?")
 		scanner.Scan()
@@ -123,28 +145,9 @@ func main() {
 					addNewSensor(Bigipmgmt, User, Pass)
 				}
 			}
-
 		}
+	} // else
 
-	} else {
-		fmt.Println("IPFIX Pool Does not Exists on BIGIP Creating .....")
-		fmt.Println("Enter first IPFIX Sensor")
-		scanner.Scan()
-		FirstSensor = scanner.Text()
-		fmt.Println("Enter Second IPFIX Sensor")
-		scanner.Scan()
-		SecondSensor = scanner.Text()
-		fmt.Println("Enter Third IPFIX Sensor")
-		scanner.Scan()
-		ThirdSensor = scanner.Text()
-		createNewIPfixPool(Bigipmgmt, User, Pass)
-		addPoolMemebers(Bigipmgmt, User, Pass, FirstSensor)
-		addPoolMemebers(Bigipmgmt, User, Pass, SecondSensor)
-		addPoolMemebers(Bigipmgmt, User, Pass, ThirdSensor)
-		fmt.Println("Created .... IPFIX Pool and added Members \n\n")
-		createIPFIXLog(Bigipmgmt, User, Pass)
-		createPublisher(Bigipmgmt, User, Pass)
-	}
 
 }
 

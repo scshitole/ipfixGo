@@ -3,17 +3,16 @@ package main
 import (
 	"bufio"
 	"fmt"
+	"github.com/f5devcentral/go-bigip"
 	"io"
 	"io/ioutil"
 	"net/http"
 	"os"
-
-	"github.com/f5devcentral/go-bigip"
 )
 
 func main() {
 	// Create a single reader which can be called multiple times
-	var UserResponse, Vresponse, Eresponse, FirstSensor, SecondSensor, Uresponse, ThirdSensor string
+	var UserResponse, Vresponse, Eresponse, FirstSensor, SecondSensor, Uresponse, Vconfig, ThirdSensor string
 	scanner := bufio.NewScanner(os.Stdin)
 	/* var Bigipmgmt, User, Pass string
 	fmt.Print("Enter your bigipmgmt: ")
@@ -72,7 +71,7 @@ func main() {
 
 	}
 
-	 checkUDPonBigip := checkUDPiruleExistsOnBigip(Bigipmgmt, User, Pass)
+	checkUDPonBigip := checkUDPiruleExistsOnBigip(Bigipmgmt, User, Pass)
 
 	if checkUDPonBigip {
 		fmt.Println("UDP irule Exists on BIG-IP")
@@ -91,7 +90,7 @@ func main() {
 		addUDPiruleToBigip(Bigipmgmt, User, Pass, Rule)
 
 	}
-  checkIpfixOnBigip := checkIpfixPoolExistsOnBigip(Bigipmgmt, User, Pass)
+	checkIpfixOnBigip := checkIpfixPoolExistsOnBigip(Bigipmgmt, User, Pass)
 	if checkIpfixOnBigip == false {
 		fmt.Println("IPFIX Pool Does not Exists on BIGIP Creating .....")
 		fmt.Println("Enter first IPFIX Sensor")
@@ -110,7 +109,7 @@ func main() {
 		fmt.Println("Created .... IPFIX Pool and added Members \n\n")
 		createIPFIXLog(Bigipmgmt, User, Pass)
 		createPublisher(Bigipmgmt, User, Pass)
-    checkIpfixOnBigip = true
+		checkIpfixOnBigip = true // now make it true
 
 	}
 
@@ -146,9 +145,15 @@ func main() {
 				}
 			}
 		}
-	} // else
-
-
+	} // if loop end
+	fmt.Println("#### DO YOU WISH TO REMOVE CONFIGURATION RECENTLY DONE ###### Y/N ?")
+	scanner.Scan()
+	Vconfig = scanner.Text()
+	if Vconfig == "Y" {
+		RemovePoolConfig(Bigipmgmt, User, Pass)
+		DettachiRule(Bigipmgmt, User, Pass)
+		DeleteiRule(Bigipmgmt, User, Pass)
+	}
 }
 
 func checkIpfixPoolExistsOnBigip(Bigipmgmt, User, Pass string) bool {
@@ -325,10 +330,10 @@ func createNewIPfixPool(Bigipmgmt, User, Pass string) error {
 		return err
 	}
 	monitor := "gateway_icmp"
-	 t := f5.AddMonitorToPool(monitor, name)
-	 if t != nil  {
-		 fmt.Printf("Error in applying monitor %s to pool %s", monitor, name)
-	 }
+	t := f5.AddMonitorToPool(monitor, name)
+	if t != nil {
+		fmt.Printf("Error in applying monitor %s to pool %s", monitor, name)
+	}
 	return nil
 }
 
@@ -428,7 +433,64 @@ func checkUDPiruleExistsOnBigip(Bigipmgmt, User, Pass string) bool {
 	}
 	return false
 }
+func RemovePoolConfig(Bigipmgmt, User, Pass string) error {
+	f5 := bigip.NewSession(Bigipmgmt, User, Pass, nil)
+	fmt.Println("Removing Publisher Configuration ........")
+	name := "ipfix-pub-1"
+	err := f5.DeleteLogPublisher(name)
+	if err != nil {
+		return err
+	}
+	fmt.Println("Removing IPFIX log Configuration ........")
 
+	t := f5.DeleteLogIPFIX("TetrationIPFIXLog")
+	if t != nil {
+		return t
+	}
+	fmt.Println("Removing IPFIX Pool Configuration ........")
+
+	p := f5.DeletePool("TetrationIPFIXPool")
+	if p != nil {
+		return p
+	}
+	return nil
+}
+
+func DettachiRule(Bigipmgmt, User, Pass string) error {
+	f5 := bigip.NewSession(Bigipmgmt, User, Pass, nil)
+	vservers, err := f5.VirtualServers()
+	if err != nil {
+		panic(err.Error())
+	}
+
+	for _, vs := range vservers.VirtualServers {
+		fmt.Printf("%s Virtual Server type is %s and IRules on this VIP are %s\n\n ", vs.Name, vs.IPProtocol, vs.Rules)
+		var a = vs.Rules
+		if (vs.IPProtocol == "tcp") || (vs.IPProtocol == "udp") {
+			i := 0
+			for i < len(a) { //looping from 0 to the length of the array
+				if a[i] == "/Common/Tetration_TCP_L4_ipfix" {
+					vs.Rules[i] = ""
+				}
+				if a[i] == "/Common/Tetration_UDP_L4_ipfix" {
+					vs.Rules[i] = ""
+				}
+				i++
+			}
+			vs.Rules = a // Collect all iRules to be configured
+			fmt.Printf("Following IRule will be applied to Virtual Server %s and iRules %s\n\n ", vs.Name, vs.Rules)
+			err := f5.ModifyVirtualServer(vs.Name, &vs)
+			if err != nil {
+				return err
+			}
+
+		}
+	}
+	return nil
+}
+func DeleteiRule(Bigipmgmt, User, Pass string) error {
+	return nil
+}
 func downloadTCPiruleFromGithub() bool {
 	fmt.Println("Downloading from github ........")
 	fileUrl := "https://raw.githubusercontent.com/f5devcentral/f5-tetration/master/irules/Tetration_TCP_L4_ipfix.tcl"

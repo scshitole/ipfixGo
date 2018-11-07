@@ -317,11 +317,15 @@ func createNewIPfixPool(Bigipmgmt, User, Pass string) error {
 	f5 := bigip.NewSession(Bigipmgmt, User, Pass, nil)
 	name := "/Common/TetrationIPFIXPool"
 	err := f5.CreatePool(name)
-
 	fmt.Println(err)
 	if err != nil {
 		return err
 	}
+	monitor := "gateway_icmp"
+	 t := f5.AddMonitorToPool(monitor, name)
+	 if t != nil  {
+		 fmt.Printf("Error in applying monitor %s to pool %s", monitor, name)
+	 }
 	return nil
 }
 

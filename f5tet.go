@@ -12,9 +12,10 @@ import (
 
 func main() {
 	// Create a single reader which can be called multiple times
+
 	var UserResponse, Vresponse, Eresponse, FirstSensor, SecondSensor, Uresponse, Vconfig, ThirdSensor string
 	scanner := bufio.NewScanner(os.Stdin)
-	/* var Bigipmgmt, User, Pass string
+	var Bigipmgmt, User, Pass string
 	fmt.Print("Enter your bigipmgmt: ")
 	scanner.Scan()
 	Bigipmgmt = scanner.Text()
@@ -23,50 +24,48 @@ func main() {
 	User = scanner.Text()
 	fmt.Print("Enter your pass: ")
 	scanner.Scan()
-	Pass = scanner.Text() */
+	Pass = scanner.Text()
+	fmt.Println("Attempting to connect...\n")
+	// Establish our session to the BIG-IP
+	//f5 := bigip.NewSession(Bigipmgmt, User, Pass, nil)
 
 	// check irule json exists in local directory under irules/
 
 	fileTCPexists := fileTCPexists() // returns true or false
 	if fileTCPexists {
-		fmt.Println("TCP iRule  exists on your local machine")
+		fmt.Println("TCP iRule  exists on your local machine\n")
 
 	} else {
-		fmt.Println("TCP irule does not exists on local machine ..... getting from github")
+		fmt.Println("TCP irule does not exists on local machine ..... getting from github\n")
 		downloadTCPiruleFromGithub()
 
 	}
 
 	fileUDPexists := fileUDPexists() // returns true or false
 	if fileUDPexists {
-		fmt.Println("UDP iRule exists on your local machine")
+		fmt.Println("UDP iRule exists on your local machine\n")
 
 	} else {
-		fmt.Println("UDP irule does not exists on local machine ..... getting from github")
+		fmt.Println("UDP irule does not exists on local machine ..... getting from github\n")
 		downloadUDPiruleFromGithub()
 	}
 
-	Bigipmgmt := "10.192.74.73"
-	User := "admin"
-	Pass := "admin"
-	fmt.Println("Attempting to connect...")
-	// Establish our session to the BIG-IP
-	//f5 := bigip.NewSession(Bigipmgmt, User, Pass, nil)
+
 	checkTCPonBigip := checkTCPiruleExistsOnBigip(Bigipmgmt, User, Pass)
 	if checkTCPonBigip {
-		fmt.Println("TCP irule Exists on BIG-IP")
+		fmt.Println("You have TCP irule on BIG-IP\n")
 	} else {
 		//fmt.Println(" TCP Irule Does not Exists on BIG-IP")
 		b, err := ioutil.ReadFile("irules/Tetration_TCP_L4_ipfix.tcl") // just pass the file name
 		if err != nil {
-			fmt.Print("Not able to locate irule on your machine ", err)
+			fmt.Println("Not able to locate irule on your local machine \n", err)
 		}
 
 		//fmt.Println(b) // print the content as 'bytes'
 
 		Rule := string(b) // convert content to a 'string'
 
-		fmt.Println("Uploading TCP Irule to BIG-IP .........") // print the content as a 'string'
+		fmt.Println("Uploading TCP Irule to BIG-IP .........\n") // print the content as a 'string'
 		addTCPiruleToBigip(Bigipmgmt, User, Pass, Rule)
 
 	}
@@ -74,32 +73,32 @@ func main() {
 	checkUDPonBigip := checkUDPiruleExistsOnBigip(Bigipmgmt, User, Pass)
 
 	if checkUDPonBigip {
-		fmt.Println("UDP irule Exists on BIG-IP")
+		fmt.Println("You have UDP irule on BIG-IP\n")
 	} else {
 		//fmt.Println(" UDP Irule Does not Exists on BIG-IP")
 		b, err := ioutil.ReadFile("irules/Tetration_UDP_L4_ipfix.tcl") // just pass the file name
 		if err != nil {
-			fmt.Print("Not able to locate UDP irule file on your local machine ", err)
+			fmt.Println("Not able to locate UDP irule file on your local machine\n", err)
 		}
 
 		//fmt.Println(b) // print the content as 'bytes'
 
 		Rule := string(b) // convert content to a 'string'
 
-		fmt.Println("Uploading UDP Irule to BIG-IP .........") // print the content as a 'string'
+		fmt.Println("Uploading UDP Irule to BIG-IP .........\n") // print the content as a 'string'
 		addUDPiruleToBigip(Bigipmgmt, User, Pass, Rule)
 
 	}
 	checkIpfixOnBigip := checkIpfixPoolExistsOnBigip(Bigipmgmt, User, Pass)
 	if checkIpfixOnBigip == false {
-		fmt.Println("IPFIX Pool Does not Exists on BIGIP Creating .....")
-		fmt.Println("Enter first IPFIX Sensor")
+		fmt.Println("IPFIX Pool Does not Exists on BIGIP Creating .....\n")
+		fmt.Print("Enter first IPFIX Sensor : ")
 		scanner.Scan()
 		FirstSensor = scanner.Text()
-		fmt.Println("Enter Second IPFIX Sensor")
+		fmt.Print("Enter Second IPFIX Sensor : ")
 		scanner.Scan()
 		SecondSensor = scanner.Text()
-		fmt.Println("Enter Third IPFIX Sensor")
+		fmt.Print("Enter Third IPFIX Sensor : ")
 		scanner.Scan()
 		ThirdSensor = scanner.Text()
 		createNewIPfixPool(Bigipmgmt, User, Pass)
@@ -115,29 +114,29 @@ func main() {
 
 	if checkIpfixOnBigip == true {
 
-		fmt.Println("IPFIX Pool Exists on BIG-IP already")
-		fmt.Println("Do you want to use Existing IPFIX Pool say Y/N ?")
+		fmt.Println("IPFIX Pool Exists on BIG-IP already\n")
+		fmt.Print("Do you want to use Existing IPFIX Pool say Y/N? ")
 		scanner.Scan()
 		UserResponse = scanner.Text()
 		if UserResponse == "Y" {
-			fmt.Println("Appy iRule on all Virtual Server Y/N ?")
+			fmt.Print("Appy iRule on all Virtual Server Y/N ? : ")
 			scanner.Scan()
 			Vresponse = scanner.Text()
 			if Vresponse == "Y" {
-				fmt.Println("Configuring iRule on all Virtual Server ......")
+				fmt.Println("Configuring iRule on all Virtual Server ......\n")
 				applyIruleOnAll(Bigipmgmt, User, Pass)
 			} else {
 				fmt.Println("Please select which Virtual Server need iRule \n")
 				applyOneByOne(Bigipmgmt, User, Pass)
 			}
 		} else {
-			fmt.Println("Update Sensors  Y/N?")
+			fmt.Print("Update Sensors  Y/N? ")
 			scanner.Scan()
 			Eresponse = scanner.Text()
 			if Eresponse == "Y" {
 				updateIpfixPoolMember(Bigipmgmt, User, Pass)
 			} else {
-				fmt.Println("Update New Sensors  Y/N?")
+				fmt.Print("Update New Sensors  Y/N? ")
 				scanner.Scan()
 				Uresponse = scanner.Text()
 				if Uresponse == "Y" {
@@ -146,7 +145,7 @@ func main() {
 			}
 		}
 	} // if loop end
-	fmt.Println("#### DO YOU WISH TO REMOVE CONFIGURATION RECENTLY DONE ###### Y/N ?")
+	fmt.Print("#### DO YOU WISH TO REMOVE CONFIGURATION RECENTLY DONE ###### Y/N ? ")
 	scanner.Scan()
 	Vconfig = scanner.Text()
 	if Vconfig == "Y" {
@@ -157,7 +156,7 @@ func main() {
 }
 
 func checkIpfixPoolExistsOnBigip(Bigipmgmt, User, Pass string) bool {
-	fmt.Println("Checking IPFIX Pool exists on bigip ......")
+	fmt.Println("Checking IPFIX Pool exists on bigip ......\n")
 	// Iterate over all the Pools, and display their names.
 	f5 := bigip.NewSession(Bigipmgmt, User, Pass, nil)
 
@@ -167,9 +166,17 @@ func checkIpfixPoolExistsOnBigip(Bigipmgmt, User, Pass string) bool {
 	}
 
 	for _, pool := range pools.Pools {
-		fmt.Printf("Name: %s\n", pool.Name)
+		//fmt.Printf("Name: %s\n", pool.Name)
 		//vs.Description = "Modified Sanjay Shitole"
 		if pool.Name == "TetrationIPFIXPool" {
+			fmt.Printf("Name: %s\n", pool.Name)
+			t, err := f5.PoolMembers("TetrationIPFIXPool")
+			if err != nil {
+				panic(err.Error())
+			}
+			for _, m := range t.PoolMembers {
+				fmt.Printf("Sensors list : %s \n", m.Name)
+			}
 			return true
 		}
 
@@ -227,7 +234,7 @@ func applyOneByOne(Bigipmgmt, User, Pass string) {
 	for _, vs := range vservers.VirtualServers {
 		var a = vs.Rules
 		fmt.Printf("%s Virtual Server type is %s and IRules on this VIP are %s\n\n ", vs.Name, vs.IPProtocol, vs.Rules)
-		fmt.Println("Do you want to Apply iRule to this Above Virtual Server  say Y/N ?")
+		fmt.Print("Do you want to Apply iRule to this Above Virtual Server  say Y/N ? ")
 		scanner.Scan()
 		Uresponse = scanner.Text()
 		if Uresponse == "Y" {
@@ -269,7 +276,7 @@ func addNewSensor(Bigipmgmt, User, Pass string) {
 		fmt.Printf("You have following Sensors installed already  %s :\n", m.Name)
 	}
 	scanner := bufio.NewScanner(os.Stdin)
-	fmt.Println("Enter the New Sensor IP (Port not required) \n")
+	fmt.Print("Enter the New Sensor IP (Port not required): ")
 	scanner.Scan()
 	Nresponse = scanner.Text()
 	addPoolMemebers(Bigipmgmt, User, Pass, Nresponse)
@@ -298,7 +305,7 @@ func updateIpfixPoolMember(Bigipmgmt, User, Pass string) {
 
 	for _, m := range members.PoolMembers {
 
-		fmt.Printf("Want to  change this Sensor IP %s : Y/N? \n", m.Name)
+		fmt.Printf("Want to  change this Sensor IP %s : Y/N? : ", m.Name)
 		scanner.Scan()
 		Sresponse = scanner.Text()
 		if Sresponse == "Y" {
@@ -306,7 +313,7 @@ func updateIpfixPoolMember(Bigipmgmt, User, Pass string) {
 			if err != nil {
 				panic(err.Error())
 			}
-			fmt.Println("Enter the New Sensor IP (Port not required) \n")
+			fmt.Print("Enter the New Sensor IP (Port not required) : ")
 			scanner.Scan()
 			Dresponse = scanner.Text()
 			addPoolMemebers(Bigipmgmt, User, Pass, Dresponse)
@@ -325,7 +332,6 @@ func createNewIPfixPool(Bigipmgmt, User, Pass string) error {
 	f5 := bigip.NewSession(Bigipmgmt, User, Pass, nil)
 	name := "/Common/TetrationIPFIXPool"
 	err := f5.CreatePool(name)
-	fmt.Println(err)
 	if err != nil {
 		return err
 	}
@@ -390,7 +396,7 @@ func fileUDPexists() bool {
 }
 
 func checkTCPiruleExistsOnBigip(Bigipmgmt, User, Pass string) bool {
-	fmt.Println("Checking TCP irule exists on bigip ......")
+	fmt.Println("Checking TCP irule exists on bigip ......\n")
 	// Iterate over all the iRules, and display their names.
 	f5 := bigip.NewSession(Bigipmgmt, User, Pass, nil)
 
@@ -400,10 +406,9 @@ func checkTCPiruleExistsOnBigip(Bigipmgmt, User, Pass string) bool {
 	}
 
 	for _, irule := range irules.IRules {
-		fmt.Printf("Name: %s\n", irule.Name)
+		//fmt.Printf("Name: %s\n", irule.Name)
 		//vs.Description = "Modified Sanjay Shitole"
 		if irule.Name == "Tetration_TCP_L4_ipfix" {
-			//fmt.Println(" Tetration_TCP_L4_ipfix does not  Exists")
 			return true
 		}
 
@@ -412,7 +417,7 @@ func checkTCPiruleExistsOnBigip(Bigipmgmt, User, Pass string) bool {
 }
 
 func checkUDPiruleExistsOnBigip(Bigipmgmt, User, Pass string) bool {
-	fmt.Println("Checking UDP irule exists on bigip ......")
+	fmt.Println("Checking UDP irule exists on bigip ......\n")
 	// Iterate over all the iRules, and display their names.
 	f5 := bigip.NewSession(Bigipmgmt, User, Pass, nil)
 
@@ -422,11 +427,10 @@ func checkUDPiruleExistsOnBigip(Bigipmgmt, User, Pass string) bool {
 	}
 
 	for _, irule := range irules.IRules {
-		fmt.Printf("Name:  %s\n", irule.Name)
+	//	fmt.Printf("Name:  %s\n", irule.Name)
 		//vs.Description = "Modified Sanjay Shitole"
 
 		if irule.Name == "Tetration_UDP_L4_ipfix" {
-			//fmt.Println(" Tetration_UDP_L4_ipfix Does not Exists")
 			return true
 		}
 
@@ -542,7 +546,6 @@ func addTCPiruleToBigip(Bigipmgmt, User, Pass, Rule string) bool {
 	f5 := bigip.NewSession(Bigipmgmt, User, Pass, nil)
 	name := "/Common/Tetration_TCP_L4_ipfix"
 	err := f5.CreateIRule(name, Rule)
-	fmt.Println(err)
 	if err != nil {
 		return false
 	}
@@ -554,7 +557,6 @@ func addUDPiruleToBigip(Bigipmgmt, User, Pass, Rule string) bool {
 	f5 := bigip.NewSession(Bigipmgmt, User, Pass, nil)
 	name := "/Common/Tetration_UDP_L4_ipfix"
 	err := f5.CreateIRule(name, Rule)
-	fmt.Println(err)
 	if err != nil {
 		return false
 	}

@@ -56,7 +56,7 @@ func main() {
 		fmt.Println("You have TCP iRules on BIG-IP\n")
 	} else {
 		//fmt.Println(" TCP Irule Does not Exists on BIG-IP")
-		b, err := ioutil.ReadFile("irules/Tetration_TCP_L4_ipfix.tcl") // just pass the file name
+		b, err := ioutil.ReadFile("Tetration_TCP_L4_ipfix.tcl") // just pass the file name
 		if err != nil {
 			fmt.Println("Not able to locate iRules on your local machine \n", err)
 		}
@@ -76,7 +76,7 @@ func main() {
 		fmt.Println("You have UDP iRules on BIG-IP\n")
 	} else {
 		//fmt.Println(" UDP Irule Does not Exists on BIG-IP")
-		b, err := ioutil.ReadFile("irules/Tetration_UDP_L4_ipfix.tcl") // just pass the file name
+		b, err := ioutil.ReadFile("Tetration_UDP_L4_ipfix.tcl") // just pass the file name
 		if err != nil {
 			fmt.Println("Not able to locate UDP iRules file on BIG-IP\n", err)
 		}

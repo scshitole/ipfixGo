@@ -17,16 +17,16 @@ func main() {
 	var UserResponse, Vresponse, Eresponse, FirstSensor, SecondSensor, Uresponse, Vconfig, ThirdSensor string
 	scanner := bufio.NewScanner(os.Stdin)
 	var Bigipmgmt, User, Pass string
-	fmt.Print("Enter your bigipmgmt: ")
+	fmt.Print("Enter your BIG-IP Management IP: ")
 	scanner.Scan()
 	Bigipmgmt = scanner.Text()
-	fmt.Print("Enter your user: ")
+	fmt.Print("Enter your Username: ")
 	scanner.Scan()
 	User = scanner.Text()
-	fmt.Print("Enter your pass: ")
+	fmt.Print("Enter your Password: ")
 	scanner.Scan()
 	Pass = scanner.Text()
-	fmt.Println("Attempting to connect...\n")
+	fmt.Println("Attempting to Connect...\n")
 	// Establish our session to the BIG-IP
 	//f5 := bigip.NewSession(Bigipmgmt, User, Pass, nil)
 
@@ -34,38 +34,38 @@ func main() {
 
 	fileTCPexists := fileTCPexists() // returns true or false
 	if fileTCPexists {
-		fmt.Println("Checking TCP iRule  exists on your local machine\n")
+		fmt.Println("Checking TCP iRules  exists on your local machine\n")
 
 	} else {
-		fmt.Println("TCP irule does not exists on local machine ..... getting from github\n")
+		fmt.Println("TCP iRules does not exists on local machine ..... getting from github\n")
 		downloadTCPiruleFromGithub()
 
 	}
 
 	fileUDPexists := fileUDPexists() // returns true or false
 	if fileUDPexists {
-		fmt.Println("Checking UDP iRule exists on your local machine\n")
+		fmt.Println("Checking UDP iRules exists on your local machine\n")
 
 	} else {
-		fmt.Println("UDP irule does not exists on local machine ..... getting from github\n")
+		fmt.Println("UDP iRules does not exists on local machine ..... getting from github\n")
 		downloadUDPiruleFromGithub()
 	}
 
 	checkTCPonBigip := checkTCPiruleExistsOnBigip(Bigipmgmt, User, Pass)
 	if checkTCPonBigip {
-		fmt.Println("You have TCP irule on BIG-IP\n")
+		fmt.Println("You have TCP iRules on BIG-IP\n")
 	} else {
 		//fmt.Println(" TCP Irule Does not Exists on BIG-IP")
 		b, err := ioutil.ReadFile("irules/Tetration_TCP_L4_ipfix.tcl") // just pass the file name
 		if err != nil {
-			fmt.Println("Not able to locate irule on your local machine \n", err)
+			fmt.Println("Not able to locate iRules on your local machine \n", err)
 		}
 
 		//fmt.Println(b) // print the content as 'bytes'
 
 		Rule := string(b) // convert content to a 'string'
 
-		fmt.Println("Uploading TCP Irule to BIG-IP .........\n") // print the content as a 'string'
+		fmt.Println("Uploading TCP iRules to BIG-IP .........\n") // print the content as a 'string'
 		addTCPiruleToBigip(Bigipmgmt, User, Pass, Rule)
 
 	}
@@ -73,25 +73,25 @@ func main() {
 	checkUDPonBigip := checkUDPiruleExistsOnBigip(Bigipmgmt, User, Pass)
 
 	if checkUDPonBigip {
-		fmt.Println("You have UDP irule on BIG-IP\n")
+		fmt.Println("You have UDP iRules on BIG-IP\n")
 	} else {
 		//fmt.Println(" UDP Irule Does not Exists on BIG-IP")
 		b, err := ioutil.ReadFile("irules/Tetration_UDP_L4_ipfix.tcl") // just pass the file name
 		if err != nil {
-			fmt.Println("Not able to locate UDP irule file on BIG-IP\n", err)
+			fmt.Println("Not able to locate UDP iRules file on BIG-IP\n", err)
 		}
 
 		//fmt.Println(b) // print the content as 'bytes'
 
 		Rule := string(b) // convert content to a 'string'
 
-		fmt.Println("Uploading UDP Irule to BIG-IP .........\n") // print the content as a 'string'
+		fmt.Println("Uploading UDP iRules to BIG-IP .........\n") // print the content as a 'string'
 		addUDPiruleToBigip(Bigipmgmt, User, Pass, Rule)
 
 	}
 	checkIpfixOnBigip := checkIpfixPoolExistsOnBigip(Bigipmgmt, User, Pass)
 	if checkIpfixOnBigip == false {
-		fmt.Println("IPFIX Pool Does not Exists on BIGIP Creating .....\n")
+		fmt.Println("IPFIX Pool Does not Exists on BIG-IP Creating .....\n")
 		fmt.Print("Enter first IPFIX Sensor : ")
 		scanner.Scan()
 		FirstSensor = scanner.Text()
@@ -119,14 +119,14 @@ func main() {
 		scanner.Scan()
 		UserResponse = scanner.Text()
 		if UserResponse == "Y" {
-			fmt.Print("Appy iRule on all Virtual Server Y/N ? : ")
+			fmt.Print("Appy iRules on all Virtual Server Y/N ? : ")
 			scanner.Scan()
 			Vresponse = scanner.Text()
 			if Vresponse == "Y" {
-				fmt.Println("Configuring iRule on all Virtual Server ......\n")
+				fmt.Println("Configuring iRules on all Virtual Server ......\n")
 				applyIruleOnAll(Bigipmgmt, User, Pass)
 			} else {
-				fmt.Println("Please select which Virtual Server need iRule \n")
+				fmt.Println("Please select which Virtual Server need iRules \n")
 				applyOneByOne(Bigipmgmt, User, Pass)
 			}
 		} else {
@@ -156,7 +156,7 @@ func main() {
 }
 
 func checkIpfixPoolExistsOnBigip(Bigipmgmt, User, Pass string) bool {
-	fmt.Println("Checking IPFIX Pool exists on bigip ......\n")
+	fmt.Println("Checking IPFIX Pool exists on BIG-IP ......\n")
 	// Iterate over all the Pools, and display their names.
 	f5 := bigip.NewSession(Bigipmgmt, User, Pass, nil)
 
@@ -396,7 +396,7 @@ func fileUDPexists() bool {
 }
 
 func checkTCPiruleExistsOnBigip(Bigipmgmt, User, Pass string) bool {
-	fmt.Println("Checking TCP irule exists on bigip ......\n")
+	fmt.Println("Checking TCP iRules exists on BIG-IP ......\n")
 	// Iterate over all the iRules, and display their names.
 	f5 := bigip.NewSession(Bigipmgmt, User, Pass, nil)
 
@@ -417,7 +417,7 @@ func checkTCPiruleExistsOnBigip(Bigipmgmt, User, Pass string) bool {
 }
 
 func checkUDPiruleExistsOnBigip(Bigipmgmt, User, Pass string) bool {
-	fmt.Println("Checking UDP irule exists on bigip ......\n")
+	fmt.Println("Checking UDP iRules exists on BIG-IP ......\n")
 	// Iterate over all the iRules, and display their names.
 	f5 := bigip.NewSession(Bigipmgmt, User, Pass, nil)
 

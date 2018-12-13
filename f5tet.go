@@ -3,11 +3,12 @@ package main
 import (
 	"bufio"
 	"fmt"
-	"github.com/f5devcentral/go-bigip"
 	"io"
 	"io/ioutil"
 	"net/http"
 	"os"
+
+	"github.com/f5devcentral/go-bigip"
 )
 
 func main() {
@@ -33,7 +34,7 @@ func main() {
 
 	fileTCPexists := fileTCPexists() // returns true or false
 	if fileTCPexists {
-		fmt.Println("TCP iRule  exists on your local machine\n")
+		fmt.Println("Checking TCP iRule  exists on your local machine\n")
 
 	} else {
 		fmt.Println("TCP irule does not exists on local machine ..... getting from github\n")
@@ -43,13 +44,12 @@ func main() {
 
 	fileUDPexists := fileUDPexists() // returns true or false
 	if fileUDPexists {
-		fmt.Println("UDP iRule exists on your local machine\n")
+		fmt.Println("Checking UDP iRule exists on your local machine\n")
 
 	} else {
 		fmt.Println("UDP irule does not exists on local machine ..... getting from github\n")
 		downloadUDPiruleFromGithub()
 	}
-
 
 	checkTCPonBigip := checkTCPiruleExistsOnBigip(Bigipmgmt, User, Pass)
 	if checkTCPonBigip {
@@ -78,7 +78,7 @@ func main() {
 		//fmt.Println(" UDP Irule Does not Exists on BIG-IP")
 		b, err := ioutil.ReadFile("irules/Tetration_UDP_L4_ipfix.tcl") // just pass the file name
 		if err != nil {
-			fmt.Println("Not able to locate UDP irule file on your local machine\n", err)
+			fmt.Println("Not able to locate UDP irule file on BIG-IP\n", err)
 		}
 
 		//fmt.Println(b) // print the content as 'bytes'
@@ -105,7 +105,7 @@ func main() {
 		addPoolMemebers(Bigipmgmt, User, Pass, FirstSensor)
 		addPoolMemebers(Bigipmgmt, User, Pass, SecondSensor)
 		addPoolMemebers(Bigipmgmt, User, Pass, ThirdSensor)
-		fmt.Println("Created .... IPFIX Pool and added Members \n\n")
+		fmt.Println("Created .... IPFIX Pool and Members added \n\n")
 		createIPFIXLog(Bigipmgmt, User, Pass)
 		createPublisher(Bigipmgmt, User, Pass)
 		checkIpfixOnBigip = true // now make it true
@@ -233,7 +233,7 @@ func applyOneByOne(Bigipmgmt, User, Pass string) {
 	}
 	for _, vs := range vservers.VirtualServers {
 		var a = vs.Rules
-		fmt.Printf("%s Virtual Server type is %s and IRules on this VIP are %s\n\n ", vs.Name, vs.IPProtocol, vs.Rules)
+		fmt.Printf("%s Virtual Server type is %s and IRules on this VIP are %s\n ", vs.Name, vs.IPProtocol, vs.Rules)
 		fmt.Print("Do you want to Apply iRule to this Above Virtual Server  say Y/N ? ")
 		scanner.Scan()
 		Uresponse = scanner.Text()
@@ -427,7 +427,7 @@ func checkUDPiruleExistsOnBigip(Bigipmgmt, User, Pass string) bool {
 	}
 
 	for _, irule := range irules.IRules {
-	//	fmt.Printf("Name:  %s\n", irule.Name)
+		//	fmt.Printf("Name:  %s\n", irule.Name)
 		//vs.Description = "Modified Sanjay Shitole"
 
 		if irule.Name == "Tetration_UDP_L4_ipfix" {
@@ -498,7 +498,7 @@ func DeleteiRule(Bigipmgmt, User, Pass string) error {
 func downloadTCPiruleFromGithub() bool {
 	fmt.Println("Downloading from github ........")
 	fileUrl := "https://raw.githubusercontent.com/f5devcentral/f5-tetration/master/irules/Tetration_TCP_L4_ipfix.tcl"
-	err := DownloadFile("irules/Tetration_TCP_L4_ipfix.tcl", fileUrl)
+	err := DownloadFile("Tetration_TCP_L4_ipfix.tcl", fileUrl)
 	if err != nil {
 		panic(err)
 	}
@@ -508,7 +508,7 @@ func downloadTCPiruleFromGithub() bool {
 func downloadUDPiruleFromGithub() bool {
 	fmt.Println("Downloading from github ........")
 	fileUrl := "https://raw.githubusercontent.com/f5devcentral/f5-tetration/master/irules/Tetration_UDP_L4_ipfix.tcl"
-	err := DownloadFile("irules/Tetration_UDP_L4_ipfix.tcl", fileUrl)
+	err := DownloadFile("Tetration_UDP_L4_ipfix.tcl", fileUrl)
 	if err != nil {
 		panic(err)
 	}

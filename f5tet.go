@@ -34,7 +34,7 @@ func main() {
 
 	fileTCPexists := fileTCPexists() // returns true or false
 	if fileTCPexists {
-		fmt.Println("Checking TCP iRules  exists on your local machine\n")
+		fmt.Println("TCP iRules  exists on your local machine\n")
 
 	} else {
 		fmt.Println("TCP iRules does not exists on local machine ..... getting from github\n")
@@ -44,7 +44,7 @@ func main() {
 
 	fileUDPexists := fileUDPexists() // returns true or false
 	if fileUDPexists {
-		fmt.Println("Checking UDP iRules exists on your local machine\n")
+		fmt.Println("UDP iRules exists on your local machine\n")
 
 	} else {
 		fmt.Println("UDP iRules does not exists on local machine ..... getting from github\n")
@@ -382,14 +382,16 @@ func createPublisher(Bigipmgmt, User, Pass string) error {
 	return nil
 }
 func fileTCPexists() bool {
-	if _, err := os.Stat("irules/Tetration_TCP_L4_ipfix.tcl"); err != nil {
+	fmt.Println("Checking TCP iRules  exists on your local machine\n")
+	if _, err := os.Stat("Tetration_TCP_L4_ipfix.tcl"); err != nil {
 		return false
 	}
 	return true
 }
 
 func fileUDPexists() bool {
-	if _, err := os.Stat("irules/Tetration_UDP_L4_ipfix.tcl"); err != nil {
+	fmt.Println("Checking UDP iRules exists on your local machine\n")
+	if _, err := os.Stat("Tetration_UDP_L4_ipfix.tcl"); err != nil {
 		return false
 	}
 	return true

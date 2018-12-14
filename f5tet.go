@@ -109,7 +109,6 @@ func main() {
 		createIPFIXLog(Bigipmgmt, User, Pass)
 		createPublisher(Bigipmgmt, User, Pass)
 		f5 := bigip.NewSession(Bigipmgmt, User, Pass, nil)
-
 		pools, err := f5.Pools()
 		if err != nil {
 			panic(err.Error())
@@ -148,9 +147,12 @@ func main() {
 			if Vresponse == "Y" {
 				fmt.Println("Configuring iRules on all Virtual Server ......\n")
 				applyIruleOnAll(Bigipmgmt, User, Pass)
+				displayAllVirtual(Bigipmgmt, User, Pass)
 			} else {
 				fmt.Println("Please select which Virtual Server need iRules \n")
 				applyOneByOne(Bigipmgmt, User, Pass)
+				displayAllVirtual(Bigipmgmt, User, Pass)
+
 			}
 		} else {
 			fmt.Print("Update Sensors  Y/N? ")
@@ -285,6 +287,19 @@ func applyOneByOne(Bigipmgmt, User, Pass string) {
 	}
 
 	//return nil
+}
+
+func displayAllVirtual(Bigipmgmt, User, Pass string) {
+	f5 := bigip.NewSession(Bigipmgmt, User, Pass, nil)
+	vservers, err := f5.VirtualServers()
+	if err != nil {
+		panic(err.Error())
+	}
+	fmt.Println("Displaying all the Virtual Servers and iRules ......")
+	for _, vs := range vservers.VirtualServers {
+		fmt.Printf("%s Virtual Server type is %s and IRules on this VIP are %s\n ", vs.Name, vs.IPProtocol, vs.Rules)
+	}
+
 }
 
 func addNewSensor(Bigipmgmt, User, Pass string) {

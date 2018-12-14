@@ -108,6 +108,29 @@ func main() {
 		fmt.Println("Created .... IPFIX Pool and Members added \n\n")
 		createIPFIXLog(Bigipmgmt, User, Pass)
 		createPublisher(Bigipmgmt, User, Pass)
+		f5 := bigip.NewSession(Bigipmgmt, User, Pass, nil)
+
+		pools, err := f5.Pools()
+		if err != nil {
+			panic(err.Error())
+		}
+		for _, pool := range pools.Pools {
+			//fmt.Printf("Name: %s\n", pool.Name)
+			//vs.Description = "Modified Sanjay Shitole"
+			if pool.Name == "TetrationIPFIXPool" {
+				fmt.Printf("Name: %s\n", pool.Name)
+				t, err := f5.PoolMembers("TetrationIPFIXPool")
+				if err != nil {
+					panic(err.Error())
+				}
+				for _, m := range t.PoolMembers {
+					fmt.Printf("Sensors list : %s \n", m.Name)
+				}
+
+			}
+
+		}
+
 		checkIpfixOnBigip = true // now make it true
 
 	}

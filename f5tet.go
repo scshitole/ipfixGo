@@ -15,7 +15,7 @@ import (
 func main() {
 	// Create a single reader which can be called multiple times
 
-	var UserResponse, Vresponse, Eresponse, FirstSensor, SecondSensor, Uresponse, Vconfig, ThirdSensor string
+	var UserResponse, dconfig, Vresponse, Eresponse, FirstSensor, SecondSensor, Uresponse, Vconfig, ThirdSensor string
 	scanner := bufio.NewScanner(os.Stdin)
 	var Bigipmgmt, User, Pass string
 	fmt.Print("Enter your BIG-IP Management IP: ")
@@ -29,8 +29,6 @@ func main() {
 	Pass = scanner.Text()
 	fmt.Println("Attempting to Connect...\n")
 	// Establish our session to the BIG-IP
-	//f5 := bigip.NewSession(Bigipmgmt, User, Pass, nil)
-
 	// check irule json exists in local directory under irules/
 
 	fileTCPexists := fileTCPexists() // returns true or false
@@ -172,14 +170,22 @@ func main() {
 			}
 		}
 	} // if loop end
-	fmt.Print("#### DO YOU WISH TO REMOVE CONFIGURATION RECENTLY DONE ###### Y/N ? ")
+	fmt.Print(" \n \n  ")
+	fmt.Print("Do you wish to dettach the IPFIX iRules? ")
+	scanner.Scan()
+	dconfig = scanner.Text()
+	if dconfig == "Y" || dconfig == "y" {
+		DettachiRule(Bigipmgmt, User, Pass)
+	}
+
+	fmt.Print("Do you wish to Remove the IPFIX Pool Configuration? ")
 	scanner.Scan()
 	Vconfig = scanner.Text()
-	if Vconfig == "Y" {
+	if Vconfig == "Y" || Vconfig == "y" {
 		RemovePoolConfig(Bigipmgmt, User, Pass)
-		DettachiRule(Bigipmgmt, User, Pass)
-		DeleteiRule(Bigipmgmt, User, Pass)
 	}
+	DeleteiRule(Bigipmgmt, User, Pass)
+
 }
 
 func checkIpfixPoolExistsOnBigip(Bigipmgmt, User, Pass string) bool {
@@ -311,20 +317,21 @@ func applyOneByOne(Bigipmgmt, User, Pass string) error {
 	return nil
 }
 
-func displayAllVirtual(Bigipmgmt, User, Pass string) {
+func displayAllVirtual(Bigipmgmt, User, Pass string) error {
 	f5 := bigip.NewSession(Bigipmgmt, User, Pass, nil)
 	vservers, err := f5.VirtualServers()
 	if err != nil {
-		panic(err.Error())
+		log.Printf("[ERROR] Unable to Read the Virtual Server  %s \n", err)
+		return err
 	}
-	fmt.Printf("Displaying all the Virtual Servers and iRules  ......\n")
+	fmt.Printf(" Displaying all the Virtual Servers and iRules  ......\n ")
 	for _, vs := range vservers.VirtualServers {
-		fmt.Printf("%s Virtual Server type is %s and IRules on this VIP are %s\n", vs.Name, vs.IPProtocol, vs.Rules)
+		fmt.Printf("%s Virtual Server type is %s and IRules on this VIP are %s \n ", vs.Name, vs.IPProtocol, vs.Rules)
 	}
-
+	return nil
 }
 
-func addNewSensor(Bigipmgmt, User, Pass string) {
+func addNewSensor(Bigipmgmt, User, Pass string) error {
 	var Nresponse string
 	f5 := bigip.NewSession(Bigipmgmt, User, Pass, nil)
 	name := "/Common/TetrationIPFIXPool"
@@ -342,22 +349,25 @@ func addNewSensor(Bigipmgmt, User, Pass string) {
 	addPoolMemebers(Bigipmgmt, User, Pass, Nresponse)
 	nodes, err := f5.PoolMembers(name)
 	if err != nil {
-		panic(err.Error())
+		log.Printf("[ERROR] Unable to Add a New Sensor  %s \n", err)
+		return err
 	}
 	for _, t := range nodes.PoolMembers {
 		fmt.Printf("Sensors installed are %s :\n", t.Name)
 	}
+	return nil
 
 }
 
-func updateIpfixPoolMember(Bigipmgmt, User, Pass string) {
+func updateIpfixPoolMember(Bigipmgmt, User, Pass string) error {
 	var Sresponse, Dresponse string
 	scanner := bufio.NewScanner(os.Stdin)
 	f5 := bigip.NewSession(Bigipmgmt, User, Pass, nil)
 	name := "/Common/TetrationIPFIXPool"
 	members, err := f5.PoolMembers(name)
 	if err != nil {
-		panic(err.Error())
+		log.Printf("[ERROR] Unable to Read the Sensor  %s \n", err)
+		return err
 	}
 	for _, m := range members.PoolMembers {
 		fmt.Printf("Sensors installed are %s :\n", m.Name)
@@ -369,14 +379,18 @@ func updateIpfixPoolMember(Bigipmgmt, User, Pass string) {
 		scanner.Scan()
 		Sresponse = scanner.Text()
 		if Sresponse == "Y" {
-			err := f5.DeletePoolMember(name, m.Name)
-			if err != nil {
-				panic(err.Error())
-			}
 			fmt.Print("Enter the New Sensor IP (Port not required) : ")
 			scanner.Scan()
 			Dresponse = scanner.Text()
-			addPoolMemebers(Bigipmgmt, User, Pass, Dresponse)
+			addsuccess, _ := addPoolMemebers(Bigipmgmt, User, Pass, Dresponse)
+			if addsuccess {
+				err := f5.DeletePoolMember(name, m.Name)
+				if err != nil {
+					log.Printf("[ERROR] Unable to Delete the Sensor  %s \n", err)
+					return err
+				}
+			}
+
 		}
 	}
 	t, err := f5.PoolMembers(name)
@@ -386,6 +400,7 @@ func updateIpfixPoolMember(Bigipmgmt, User, Pass string) {
 	for _, m := range t.PoolMembers {
 		fmt.Printf("Updated Sensors list : %s \n", m.Name)
 	}
+	return nil
 }
 
 func createNewIPfixPool(Bigipmgmt, User, Pass string) error {
@@ -403,14 +418,15 @@ func createNewIPfixPool(Bigipmgmt, User, Pass string) error {
 	return nil
 }
 
-func addPoolMemebers(Bigipmgmt, User, Pass, Sensor string) error {
+func addPoolMemebers(Bigipmgmt, User, Pass, Sensor string) (bool, error) {
 	f5 := bigip.NewSession(Bigipmgmt, User, Pass, nil)
 	member := Sensor + ":4739"
 	err := f5.AddPoolMember("TetrationIPFIXPool", member)
 	if err != nil {
-		return err
+		log.Printf("[ERROR] Unable to Add the Sensor  %s \n", err)
+		return false, err
 	}
-	return nil
+	return true, nil
 }
 
 func createIPFIXLog(Bigipmgmt, User, Pass string) error {

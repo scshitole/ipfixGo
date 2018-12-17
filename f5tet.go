@@ -19,6 +19,7 @@ func main() {
 	scanner := bufio.NewScanner(os.Stdin)
 	var Bigipmgmt, User, Pass string
 	fmt.Print("Enter your BIG-IP Management IP: ")
+	//fmt.Print("Enter your BIG-IP Management IP: ")
 	scanner.Scan()
 	Bigipmgmt = scanner.Text()
 	fmt.Print("Enter your Username: ")
@@ -116,7 +117,7 @@ func main() {
 			//fmt.Printf("Name: %s\n", pool.Name)
 			//vs.Description = "Modified Sanjay Shitole"
 			if pool.Name == "TetrationIPFIXPool" {
-				fmt.Printf("Name: %s\n", pool.Name)
+				fmt.Printf("\033[32mName: %s\n", pool.Name)
 				t, err := f5.PoolMembers("TetrationIPFIXPool")
 				if err != nil {
 					panic(err.Error())
@@ -128,15 +129,15 @@ func main() {
 			}
 
 		}
-
+		fmt.Printf("\033[30m")
 		checkIpfixOnBigip = true // now make it true
 
 	}
 
 	if checkIpfixOnBigip == true {
 
-		fmt.Println("IPFIX Pool Exists on BIG-IP already\n")
-		fmt.Print("Do you want to use Existing IPFIX Pool say Y/N? ")
+		fmt.Println("Above Showing you IPFIX Pool on BIG-IP \n")
+		fmt.Print("Do you want to use the above shown IPFIX Pool say Y/N? ")
 		scanner.Scan()
 		UserResponse = scanner.Text()
 		if UserResponse == "Y" || UserResponse == "y" {
@@ -202,7 +203,7 @@ func checkIpfixPoolExistsOnBigip(Bigipmgmt, User, Pass string) bool {
 		//fmt.Printf("Name: %s\n", pool.Name)
 		//vs.Description = "Modified Sanjay Shitole"
 		if pool.Name == "TetrationIPFIXPool" {
-			fmt.Printf("Name: %s\n", pool.Name)
+			fmt.Printf("\033[32mName: %s\n", pool.Name)
 			t, err := f5.PoolMembers("TetrationIPFIXPool")
 			if err != nil {
 				panic(err.Error())
@@ -210,7 +211,9 @@ func checkIpfixPoolExistsOnBigip(Bigipmgmt, User, Pass string) bool {
 			for _, m := range t.PoolMembers {
 				fmt.Printf("Sensors list : %s \n", m.Name)
 			}
+			fmt.Printf("\033[30m")
 			return true
+
 		}
 
 	}
@@ -229,10 +232,10 @@ func applyTcpIruleOnAll(Bigipmgmt, User, Pass string) error {
 		var a = vs.Rules
 		if vs.IPProtocol == "tcp" {
 			vs.Rules = append(a, "/Common/Tetration_TCP_L4_ipfix") // Collect all iRules to be configured
-			fmt.Printf("IPFIX TCP iRules will be applied to Virtual Server %s\n\n", vs.Name)
+			fmt.Printf("IPFIX TCP iRules will be applied to Virtual Server \033[32m%s\033[30m\n\n", vs.Name)
 			err := f5.ModifyVirtualServer(vs.Name, &vs)
 			if err != nil {
-				log.Printf("[ERROR] Unable to Apply iRule to  %s ", vs.Name)
+				log.Printf("\033[91m[ERROR] Unable to Apply iRule to  %s\033[30m\n\n", vs.Name)
 				return err
 			}
 
@@ -257,10 +260,10 @@ func applyUdpIruleOnAll(Bigipmgmt, User, Pass string) error {
 		//if  len(a) != 0 {
 		if vs.IPProtocol == "udp" {
 			vs.Rules = append(a, "/Common/Tetration_UDP_L4_ipfix") // Collect all iRules to be configured
-			fmt.Printf("IPFIX UDP IRules will be applied to Virtual Server %s\n\n ", vs.Name)
+			fmt.Printf("IPFIX UDP IRules will be applied to Virtual Server \033[34m%s\033[30m\n\n", vs.Name)
 			err := f5.ModifyVirtualServer(vs.Name, &vs)
 			if err != nil {
-				log.Printf("[ERROR] Unable to Apply iRule to  %s ", vs.Name)
+				log.Printf("\033[91m[ERROR] Unable to Apply iRule to  %s\033[30m\n\n", vs.Name)
 				return err
 			}
 
@@ -281,17 +284,17 @@ func applyOneByOne(Bigipmgmt, User, Pass string) error {
 	}
 	for _, vs := range vservers.VirtualServers {
 		var a = vs.Rules
-		fmt.Printf("%s Virtual Server type is %s and IRules on this VIP are %s\n", vs.Name, vs.IPProtocol, vs.Rules)
+		fmt.Printf("\033[32m%s\033[30m Virtual Server type is \033[32m%s\033[30m and IRules on this VIP are \033[32m%s\033[30m\n", vs.Name, vs.IPProtocol, vs.Rules)
 		fmt.Print("Do you want to Apply iRule to this Above Virtual Server  say Y/N ? ")
 		scanner.Scan()
 		Uresponse = scanner.Text()
 		if Uresponse == "Y" || Uresponse == "y" {
 			if vs.IPProtocol == "tcp" {
 				vs.Rules = append(a, "/Common/Tetration_TCP_L4_ipfix") // Collect all iRules to be configured
-				fmt.Printf("IPFIX TCP IRule will be applied to Virtual Server %s\n\n", vs.Name)
+				fmt.Printf("IPFIX TCP IRule will be applied to Virtual Server \033[32m%s\033[30m\n\n", vs.Name)
 				err := f5.ModifyVirtualServer(vs.Name, &vs)
 				if err != nil {
-					log.Printf("[ERROR] Unable to Apply iRule to  %s ", vs.Name)
+					log.Printf("\033[91m[ERROR] Unable to Apply iRule to  %s\033[30m\n\n", vs.Name)
 					return err
 				}
 
@@ -299,11 +302,10 @@ func applyOneByOne(Bigipmgmt, User, Pass string) error {
 
 				if vs.IPProtocol == "udp" {
 					vs.Rules = append(a, "/Common/Tetration_UDP_L4_ipfix") // Collect all iRules to be configured
-					fmt.Printf("IPFIX UDP IRule will be applied to Virtual Server %s\n\n", vs.Name)
-					//	vs.Rules = []string{"/Common/Tetration_UDP_L4_ipfix"}
+					fmt.Printf("IPFIX UDP IRule will be applied to Virtual Server \033[34m%s\033[30m\n\n", vs.Name)
 					err := f5.ModifyVirtualServer(vs.Name, &vs)
 					if err != nil {
-						log.Printf("[ERROR] Unable to Apply iRule to  %s ", vs.Name)
+						log.Printf("\033[91m[ERROR] Unable to Apply iRule to  %s\033[30m\n\n", vs.Name)
 						return err
 					}
 				} else {
@@ -327,7 +329,7 @@ func displayAllVirtual(Bigipmgmt, User, Pass string) error {
 	fmt.Printf("\n\n")
 	fmt.Printf("Displaying all the Virtual Servers and iRules  ......\n")
 	for _, vs := range vservers.VirtualServers {
-		fmt.Printf("%s Virtual Server type is %s and IRules on this VIP are %s \n", vs.Name, vs.IPProtocol, vs.Rules)
+		fmt.Printf("\033[32m%s\033[30m Virtual Server type is \033[32m%s\033[30m and IRules on this VIP are \033[32m%s\033[30m \n", vs.Name, vs.IPProtocol, vs.Rules)
 	}
 	return nil
 }
@@ -379,7 +381,7 @@ func updateIpfixPoolMember(Bigipmgmt, User, Pass string) error {
 		fmt.Printf("Want to  change this Sensor IP %s : Y/N? : ", m.Name)
 		scanner.Scan()
 		Sresponse = scanner.Text()
-		if Sresponse == "Y" {
+		if Sresponse == "Y" || Sresponse == "y" {
 			fmt.Print("Enter the New Sensor IP (Port not required) : ")
 			scanner.Scan()
 			Dresponse = scanner.Text()
@@ -399,7 +401,7 @@ func updateIpfixPoolMember(Bigipmgmt, User, Pass string) error {
 		panic(err.Error())
 	}
 	for _, m := range t.PoolMembers {
-		fmt.Printf("Updated Sensors list : %s \n", m.Name)
+		fmt.Printf("Updated Sensors list : \033[32m%s\033[30m \n", m.Name)
 	}
 	return nil
 }
@@ -561,9 +563,10 @@ func DettachiRule(Bigipmgmt, User, Pass string) error {
 				i++
 			}
 			vs.Rules = a // Collect all iRules to be configured
-			fmt.Printf("Following iRules will be applied to Virtual Server %s and iRules %s\n\n", vs.Name, vs.Rules)
+			fmt.Printf("Following iRules will be applied to Virtual Server \033[32m%s\033[30m  and iRules \033[32m%s\033[30m\n\n", vs.Name, vs.Rules)
 			err := f5.ModifyVirtualServer(vs.Name, &vs)
 			if err != nil {
+				log.Printf("\033[91m[ERROR] Unable to Dettach iRule from  %s\033[30m\n\n", vs.Name)
 				return err
 			}
 
